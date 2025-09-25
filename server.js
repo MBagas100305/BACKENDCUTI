@@ -7,6 +7,11 @@ const sequelize = db.sequelize;
 const app = express();
 const port = process.env.PORT || 5000;
 
+// ✅ Test koneksi DB
+sequelize.authenticate()
+  .then(() => console.log("✅ Connected to DB:", sequelize.config.database))
+  .catch(err => console.error("❌ DB Connection Error:", err));
+
 // Import routes
 const karyawanRoutes = require('./src/routes/karyawan');
 const pengajuanCutiRoutes = require('./src/routes/pengajuanCuti');
@@ -14,7 +19,6 @@ const saldoCutiRoutes = require('./src/routes/saldoCuti');
 const authRoutes = require('./src/routes/auth');
 const statistikRoutes = require('./src/routes/statistik'); 
 const cutiRoutes = require('./src/routes/cuti');
-
 
 // Middleware
 app.use(cors());

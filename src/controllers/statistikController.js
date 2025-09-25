@@ -1,58 +1,30 @@
-const { PengajuanCuti, Karyawan, Divisi } = require('../models');
-const { Sequelize } = require('sequelize');
 
-module.exports = {
-  async getCutiPerDivisi(req, res) {
+
+// src/controllers/statistikController.js
+const statistikRepo = require('../repositories/StatistikRepository');
+
+const getCutiPerDivisi = async (req, res) => {
     try {
-      const data = await Karyawan.findAll({
-        attributes: [
-          [Sequelize.col('divisi.nama_divisi'), 'nama_divisi'],
-          [Sequelize.fn('COUNT', Sequelize.col('pengajuanCutis.id')), 'total']
-        ],
-        include: [
-          {
-            model: Divisi,
-            as: 'divisi',
-            attributes: []
-          },
-          {
-            model: PengajuanCuti,
-            attributes: []
-          }
-        ],
-        group: ['divisi.id_divisi', 'divisi.nama_divisi']
-      });
+      const data = await statistikRepo.getCutiPerDivisi();
       res.json(data);
     } catch (err) {
+      console.error("ERROR GET CUTI PER DIVISI:", err.message);
       res.status(500).json({ error: err.message });
     }
-  },
+};
 
-  async getDetailCutiPerDivisi(req, res) {
+const getDetailCutiPerDivisi = async (req, res) => {
     try {
       const { divisiId } = req.params;
-      const data = await Karyawan.findAll({
-        where: { id_divisi: divisiId }, // pakai id_divisi, bukan "divisi"
-        attributes: [
-          'nama',
-          [Sequelize.fn('COUNT', Sequelize.col('pengajuanCutis.id')), 'total']
-        ],
-        include: [
-          {
-            model: PengajuanCuti,
-            attributes: []
-          },
-          {
-            model: Divisi,
-            as: 'divisi',
-            attributes: []
-          }
-        ],
-        group: ['Karyawan.emp_id', 'Karyawan.nama']
-      });
+      const data = await statistikRepo.getDetailCutiPerDivisi(divisiId);
       res.json(data);
     } catch (err) {
+      console.error("ERROR GET DETAIL CUTI PER DIVISI:", err.message);
       res.status(500).json({ error: err.message });
     }
-  }
+};
+
+module.exports = { 
+    getCutiPerDivisi, 
+    getDetailCutiPerDivisi 
 };

@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const statistikController = require('../controllers/statistikController');
+const auth = require("../middleware/authMiddleware"); 
 
-// total cuti per divisi
-router.get('/divisi', statistikController.getCutiPerDivisi);
-
-// detail cuti dalam divisi tertentu
-router.get('/divisi/:divisiId', statistikController.getDetailCutiPerDivisi);
+// Statistik (Admin & Kadiv)
+router.get('/divisi', auth(["admin", "kadiv"]), statistikController.getCutiPerDivisi);
+router.get('/divisi/:divisiId', auth(["admin", "kadiv"]), statistikController.getDetailCutiPerDivisi);
 
 module.exports = router;

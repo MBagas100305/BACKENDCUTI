@@ -1,32 +1,9 @@
-const { PengajuanCuti, Karyawan, Divisi, Sequelize } = require('../models');
+// src/controllers/cutiController.js
+const statistikRepo = require('../repositories/StatistikRepository');
 
 const getDivisionLeaveData = async (req, res) => {
   try {
-    const rows = await Divisi.findAll({
-      attributes: [
-        'id_divisi',
-        'nama_divisi',
-        [Sequelize.fn('COUNT', Sequelize.col('Karyawans->PengajuanCuti.id_pengajuan')), 'jumlah'],
-      ],
-      include: [
-        {
-          model: Karyawan,
-          as: 'Karyawans', // ini harus sesuai dengan alias default / relasi
-          attributes: [],
-          include: [
-            {
-              model: PengajuanCuti,
-              as: 'PengajuanCuti', // harus sama dengan alias di index.js
-              attributes: [],
-            },
-          ],
-          required: false,
-        },
-      ],
-      group: ['Divisi.id_divisi', 'Divisi.nama_divisi'],
-      raw: true,
-    });
-
+    const rows = await statistikRepo.getDivisionLeaveData();
     res.json(rows);
   } catch (err) {
     console.error('Error fetching division leave (Sequelize):', err.message);

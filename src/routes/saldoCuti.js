@@ -1,46 +1,43 @@
+// src/routes/saldoCuti.js
 const express = require("express");
 const router = express.Router();
 const saldoCutiController = require("../controllers/saldoCutiController");
+const KaryawanRepo = require('../repositories/KaryawanRepository');
 const auth = require("../middleware/authMiddleware");
 
-// GET semua saldo (admin only)
+// GET semua saldo, POST buat saldo baru (Admin only)
 router.get("/", auth(["admin"]), saldoCutiController.getAllSaldoCuti);
+router.post("/", auth(["admin"]), saldoCutiController.createSaldoCuti); 
 
-// GET saldo by emp_id / role
+// GET statistik cuti (Admin only)
+router.get("/stats", auth(["admin"]), saldoCutiController.getCutiStats);
+
+// GET saldo by emp_id / role (Otorisasi ketat)
 router.get("/:emp_id", auth(["admin", "kadiv", "pengaju"]), async (req, res) => {
   try {
-    const { emp_id } = req.params;
+    const emp_id = parseInt(req.params.emp_id, 10);
     const user = req.user;
-
     let saldo = [];
 
-    // pengaju hanya bisa lihat saldo miliknya sendiri
     if (user.role === "pengaju") {
-      if (parseInt(emp_id) !== user.emp_id) {
+      if (emp_id !== user.emp_id) {
         return res.status(403).json({ error: "Forbidden: tidak bisa akses saldo orang lain" });
       }
       saldo = await saldoCutiController.getSaldoByEmpId(emp_id);
-    }
-
-    // kadiv hanya bisa lihat saldo karyawan di divisinya
-    else if (user.role === "kadiv") {
-      saldo = await saldoCutiController.getSaldoByDivisi(user.divisi_id);
-      // filter untuk emp_id yang diminta
-      saldo = saldo.filter(s => s.emp_id === parseInt(emp_id));
-      if (saldo.length === 0) {
+    } else if (user.role === "kadiv") {
+      // Cek apakah emp_id yang diminta berada di divisi Kadiv
+      const karyawanDiDivisi = await KaryawanRepo.getById(emp_id);
+      if (!karyawanDiDivisi || karyawanDiDivisi.id_divisi !== user.divisi_id) {
         return res.status(403).json({ error: "Forbidden: tidak bisa akses saldo di luar divisi" });
       }
-    }
-
-    // admin bisa lihat semua
-    else if (user.role === "admin") {
+      saldo = await saldoCutiController.getSaldoByEmpId(emp_id);
+    } else if (user.role === "admin") {
       saldo = await saldoCutiController.getSaldoByEmpId(emp_id);
     }
 
     if (!saldo || saldo.length === 0) {
       return res.status(404).json({ message: "Saldo cuti tidak ditemukan" });
     }
-
     res.json(saldo);
   } catch (err) {
     console.error("ERROR GET BY EMP_ID:", err);
